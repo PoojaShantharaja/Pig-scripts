@@ -1,0 +1,43 @@
+airports = load '/Users/poojashantharaja/Documents/Hadoop/Documents/Projects/Air-datasets/airports_mod.dat' Using PigStorage(',') as (airportid: int, airportname:chararray, city:chararray, country:chararray, code1:chararray, code2:chararray, latitude:float, longitude:float, altitude: float, timezone:chararray, dst:chararray, tz: chararray);
+
+airlines = load '/Users/poojashantharaja/Documents/Hadoop/Documents/Projects/Air-datasets/Final_airlines' Using PigStorage(',') as (airlineid:chararray, airlinename:chararray, alias:chararray, iata:chararray, icao:chararray, callsign:chararray, country:chararray, active:chararray);
+
+routes = load '/Users/poojashantharaja/Documents/Hadoop/Documents/Projects/Air-datasets/routes.dat' Using PigStorage(',') as (code:chararray, airlineid:chararray, sourceport:chararray, sourceid:int, destport:chararray, destid:int, codeshare:chararray, stops:int, equip:chararray);
+
+filter_res1 = FILTER airports by UPPER(country)=='INDIA' ;
+res1 = FOREACH filter_res1 GENERATE airportname;
+stored_result1 = store res1 into '/Users/poojashantharaja/Documents/Hadoop/workspace/p1';
+
+
+filter_res2 = FILTER airlines by UPPER(country)=='INDIA';
+res2 = FOREACH filter_res2 GENERATE airlinename;
+stored_result2 = store res2 into '/Users/poojashantharaja/Documents/Hadoop/workspace/p2';
+
+
+filter_res3 = FILTER routes by stops==0;
+aid3 = FOREACH filter_res3 GENERATE airlineid;
+joined_table3 = JOIN aid3 by airlineid, airlines by airlineid;
+res3 = FOREACH joined_table3 GENERATE airlinename;
+distinct_res3 = DISTINCT res3;
+stored_res3 = store distinct_res3 into '/Users/poojashantharaja/Documents/Hadoop/workspace/p3';
+
+filter_res4 = FILTER routes by codeshare=='Y';
+joined_table4 = JOIN filter_res4 by airlineid, airlines by airlineid;
+res4 = FOREACH joined_table4 GENERATE airlinename;
+distinct_res4 = DISTINCT res4;
+stored_res4 = store distinct_res4 into '/Users/poojashantharaja/Documents/Hadoop/workspace/p4';
+
+
+grouped5 = GROUP airports by country;
+res5 = FOREACH grouped5 GENERATE group, COUNT(airports.airportid) as cnt;
+ordered_res5 = ORDER res5 by $1 DESC;
+final_res5 = LIMIT ordered_res5 10;
+stored_res5 = store final_res5 into '/Users/poojashantharaja/Documents/Hadoop/workspace/p5';
+
+
+filtered_table6 = FILTER airlines by active=='Y'AND UPPER(country)=='UNITED STATES';
+res6 = FOREACH filtered_table6 GENERATE airlinename;
+distinct_res6 = DISTINCT res6;
+stored_res6 = store distinct_res6 into '/Users/poojashantharaja/Documents/Hadoop/workspace/p6';
+
+
